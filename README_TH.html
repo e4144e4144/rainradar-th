@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>เรดาร์ฝน — คู่มือการใช้งาน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Sarabun',sans-serif;background:#f4f7fb;color:#1a2332;line-height:1.7;}
+  .wrap{max-width:600px;margin:0 auto;padding:32px 20px 60px;}
+  .hero{background:linear-gradient(135deg,#0e78dc,#0095b3);border-radius:18px;padding:28px 24px;color:white;margin-bottom:24px;text-align:center;}
+  .hero-icon{font-size:48px;margin-bottom:10px;}
+  .hero h1{font-size:22px;font-weight:700;margin-bottom:6px;}
+  .hero p{font-size:14px;opacity:0.85;}
+  .section{background:white;border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,0.06);}
+  .section-title{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;}
+  .step:last-child{margin-bottom:0;}
+  .num{width:28px;height:28px;border-radius:50%;background:#0e78dc;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .step-title{font-size:14px;font-weight:700;margin-bottom:3px;}
+  .step-desc{font-size:13px;color:#555;line-height:1.7;}
+  .btn-demo{display:inline-flex;align-items:center;gap:4px;background:#f0f4fb;border:1.5px solid rgba(14,120,220,0.15);border-radius:8px;padding:3px 9px;font-size:12px;color:#0e78dc;font-weight:700;}
+  .note{background:#f8faff;border-left:3px solid #0e78dc;border-radius:0 8px 8px 0;padding:10px 12px;font-size:13px;color:#555;margin-top:8px;line-height:1.6;}
+  .tag{display:inline-block;padding:2px 9px;border-radius:5px;font-size:12px;font-weight:700;margin:2px 2px 2px 0;}
+  .tag.blue{background:#e6f1fb;color:#0e78dc;}
+  .tag.orange{background:#fff3e0;color:#e07b00;}
+  .tag.green{background:#e8f5e9;color:#1a9e3f;}
+  .tag.red{background:#fdecea;color:#d62b2b;}
+  .compass-demo{display:flex;justify-content:center;margin:12px 0 8px;}
+  .cd{width:84px;height:84px;border-radius:50%;border:2px solid #dde5f0;position:relative;font-size:9px;color:#888;}
+  .cd span{position:absolute;}
+  .cd .n{top:4px;left:50%;transform:translateX(-50%);}
+  .cd .s{bottom:4px;left:50%;transform:translateX(-50%);}
+  .cd .e{right:4px;top:50%;transform:translateY(-50%);}
+  .cd .w{left:4px;top:50%;transform:translateY(-50%);}
+  .dot{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);}
+  .dot.me{background:#0e78dc;left:50%;top:50%;}
+  .dot.rain{background:#e07b00;}
+  .dot.clear{background:#ddd;}
+  .legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:#555;}
+  .ldot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-icon">🌧️</div>
+    <h1>เรดาร์ฝน — คู่มือการใช้งาน</h1>
+    <p>ติดตามเมฆฝนแบบเรียลไทม์ด้วยข้อมูล RainViewer</p>
+  </div>
+
+  <!-- ติดตั้ง -->
+  <div class="section">
+    <div class="section-title">📱 เพิ่มลงหน้าจอหลัก</div>
+    <div class="step">
+      <div class="num">1</div>
+      <div class="step-body">
+        <div class="step-title">เปิดด้วย Chrome</div>
+        <div class="step-desc">เปิด URL ของแอปใน <strong>Chrome</strong> บนมือถือ Android</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="step-body">
+        <div class="step-title">เพิ่มลงหน้าจอหลัก</div>
+        <div class="step-desc">แตะ <strong>⋮</strong> มุมบนขวา → <strong>"เพิ่มลงหน้าจอหลัก"</strong><br>แอปจะปรากฏเป็นไอคอนบนหน้าจอ ไม่ต้องโหลดจาก Play Store</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- การใช้งานพื้นฐาน -->
+  <div class="section">
+    <div class="section-title">🗺️ วิธีใช้งานพื้นฐาน</div>
+    <div class="step">
+      <div class="num">1</div>
+      <div class="step-body">
+        <div class="step-title">ระบุตำแหน่งของคุณ</div>
+        <div class="step-desc">แตะปุ่ม <span class="btn-demo">📍</span> มุมล่างขวา แล้วกด "อนุญาต" เมื่อระบบถามสิทธิ์ แผนที่จะย้ายมาที่ตำแหน่งของคุณทันที</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="step-body">
+        <div class="step-title">ดูเรดาร์เมฆฝน</div>
+        <div class="step-desc">หลังจากระบุตำแหน่งแล้ว เรดาร์จะแสดงขึ้นอัตโนมัติ สีบนแผนที่บอกความเข้มของฝน</div>
+        <div class="note">
+          ฟ้าอ่อน → ฝนเบา &nbsp;|&nbsp; เหลือง/ส้ม → ฝนปานกลาง &nbsp;|&nbsp; แดง/ม่วง → ฝนหนัก
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div class="step-body">
+        <div class="step-title">เลื่อนดูตามเวลา</div>
+        <div class="step-desc">แตะแถบเวลาด้านล่างเพื่อดูเมฆฝนในช่วงเวลานั้น<br>
+          <span class="tag blue">แถบสีน้ำเงิน</span> ข้อมูลย้อนหลัง &nbsp; <span class="tag orange">แถบสีส้ม</span> พยากรณ์
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <div class="step-body">
+        <div class="step-title">เล่นแอนิเมชัน</div>
+        <div class="step-desc">แตะ <strong>▶️</strong> เพื่อดูการเคลื่อนตัวของเมฆฝน<br>แตะ <strong>1×</strong> เพื่อเปลี่ยนความเร็ว: 1× → 2× → 4×</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ทิศทางฝน -->
+  <div class="section">
+    <div class="section-title">🔍 ฝนมาจากทิศไหน?</div>
+    <div class="step">
+      <div class="num">1</div>
+      <div class="step-body">
+        <div class="step-title">แตะปุ่ม 🔍</div>
+        <div class="step-desc">หลังระบุตำแหน่งแล้ว แตะ <span class="btn-demo">🔍</span> เพื่อสแกนเมฆฝนรอบตัว 8 ทิศทาง ในรัศมี ~50 กม.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="step-body">
+        <div class="step-title">อ่านเข็มทิศ</div>
+        <div class="compass-demo">
+          <div class="cd">
+            <span class="n">N</span><span class="s">S</span>
+            <span class="e">E</span><span class="w">W</span>
+            <div class="dot clear" style="left:50%;top:18%;"></div>
+            <div class="dot rain" style="left:18%;top:50%;"></div>
+            <div class="dot clear" style="left:82%;top:50%;"></div>
+            <div class="dot clear" style="left:50%;top:82%;"></div>
+            <div class="dot me"></div>
+          </div>
+        </div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="ldot" style="background:#e07b00;"></div>ตรวจพบฝน</div>
+          <div class="legend-item"><div class="ldot" style="background:#ddd;"></div>ไม่มีฝน</div>
+          <div class="legend-item"><div class="ldot" style="background:#0e78dc;"></div>ตำแหน่งของคุณ</div>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div class="step-body">
+        <div class="step-title">ผลลัพธ์ที่อาจแสดง</div>
+        <div class="step-desc">
+          <span class="tag green">☀️ ปลอดโปร่ง</span> ไม่พบเมฆฝนในรัศมี 50 กม.<br>
+          <span class="tag orange">🌧️ ฝนกำลังมา</span> ฝนเคลื่อนมาจากทิศ [ทิศทาง]<br>
+          <span class="tag red">☔ กำลังมีฝน</span> ฝนตกอยู่ที่ตำแหน่งของคุณแล้ว
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- แหล่งข้อมูล -->
+  <div class="section">
+    <div class="section-title">📡 แหล่งข้อมูล</div>
+    <div class="step-desc" style="font-size:13px;color:#555;">
+      แอปนี้ใช้ข้อมูลเรดาร์จาก <strong>RainViewer</strong> ซึ่งครอบคลุมทั่วโลกรวมถึงประเทศไทย และใช้ข้อมูลพยากรณ์รายชั่วโมงจาก <strong>Open-Meteo</strong> สำหรับการตรวจสอบทิศทางฝน
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
