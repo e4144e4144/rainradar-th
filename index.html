@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+  <meta name="theme-color" content="#f0f4f8"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="เรดาร์ฝน"/>
+  <title>เรดาร์ฝน</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--blue:#0e78dc;--warn:#e07b00;--danger:#d62b2b;--green:#1a9e3f;--text:#1a2332;--text2:rgba(26,35,50,0.55);--panel:rgba(255,255,255,0.96);--border:rgba(0,0,0,0.1);}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{width:100%;height:100%;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--text);background:#e8eeea;}
+    #map{position:absolute;inset:0;z-index:0;}
+    .leaflet-control-attribution{font-size:9px!important;background:rgba(255,255,255,0.7)!important;color:rgba(0,0,0,0.4)!important;}
+    .leaflet-control-zoom{display:none!important;}
+    .leaflet-tile-error{visibility:hidden!important;opacity:0!important;}
+
+    #topbar{position:absolute;top:0;left:0;right:0;z-index:900;padding:max(env(safe-area-inset-top),12px) 16px 10px;background:linear-gradient(to bottom,rgba(240,244,248,0.97) 70%,transparent);display:flex;align-items:center;gap:10px;}
+    .title-icon{width:30px;height:30px;background:rgba(14,120,220,0.1);border:1px solid rgba(14,120,220,0.25);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .title-icon svg{width:16px;height:16px;}
+    h1{font-size:17px;font-weight:700;flex:1;}
+    #clock{font-family:'DM Mono',monospace;font-size:13px;color:var(--text2);}
+
+    #status-chip{position:absolute;top:62px;left:50%;transform:translateX(-50%);z-index:900;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;backdrop-filter:blur(10px);white-space:nowrap;transition:opacity 0.4s;}
+    #status-chip.hidden{opacity:0;pointer-events:none;}
+    .chip-dot{width:6px;height:6px;border-radius:50%;background:#aaa;}
+    .chip-dot.blue{background:var(--blue);animation:pulse 1.4s infinite;}
+    .chip-dot.green{background:var(--green);}
+    .chip-dot.red{background:var(--danger);}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+    #legend{position:absolute;top:68px;left:12px;z-index:800;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:7px 10px;backdrop-filter:blur(10px);display:none;}
+    #legend.show{display:block;}
+    .lg-title{font-size:10px;color:var(--text2);margin-bottom:4px;}
+    .lg-bar{width:100px;height:6px;background:linear-gradient(to right,#00ffff,#00ff00,#ffff00,#ff8c00,#ff0000,#9400d3);border-radius:3px;margin-bottom:3px;}
+    .lg-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--text2);font-family:'DM Mono',monospace;}
+
+    #toast{position:absolute;top:68px;left:16px;right:16px;z-index:1000;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;backdrop-filter:blur(16px);transform:translateY(-20px);opacity:0;pointer-events:none;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;}
+    #toast.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+    #toast.warn{border-color:var(--warn);}#toast.danger{border-color:var(--danger);}
+    .toast-icon{width:22px;height:22px;flex-shrink:0;margin-top:1px;}
+    #toast-title{font-size:14px;font-weight:700;margin-bottom:2px;}
+    #toast-body{font-size:13px;color:var(--text2);line-height:1.5;}
+
+    /* rain direction card */
+    #rain-card{position:absolute;top:68px;left:16px;right:16px;z-index:1000;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px 16px;backdrop-filter:blur(16px);transform:translateY(-20px);opacity:0;pointer-events:none;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;}
+    #rain-card.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+    #rain-card.warn{border-color:var(--warn);}
+    #rain-card.safe{border-color:var(--green);}
+    #rain-card-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+    #rain-card-icon{font-size:20px;}
+    #rain-card-title{font-size:15px;font-weight:700;flex:1;}
+    #rain-card-close{width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.06);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);}
+    #rain-card-body{font-size:13px;color:var(--text2);line-height:1.7;}
+    #rain-card-body strong{color:var(--text);font-weight:700;}
+    #compass{width:100px;height:100px;margin:12px auto 4px;position:relative;}
+    .compass-ring{width:100%;height:100%;border-radius:50%;border:2px solid var(--border);position:relative;display:flex;align-items:center;justify-content:center;}
+    .compass-dir{position:absolute;font-size:9px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text2);}
+    .compass-dir.n{top:4px;left:50%;transform:translateX(-50%);}
+    .compass-dir.s{bottom:4px;left:50%;transform:translateX(-50%);}
+    .compass-dir.e{right:5px;top:50%;transform:translateY(-50%);}
+    .compass-dir.w{left:5px;top:50%;transform:translateY(-50%);}
+    .compass-dot{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);transition:background 0.3s;}
+    .compass-dot.rain{background:var(--warn);box-shadow:0 0 6px rgba(224,123,0,0.6);}
+    .compass-dot.clear{background:rgba(0,0,0,0.08);}
+    .compass-dot.me{background:var(--blue);width:8px;height:8px;box-shadow:0 0 8px rgba(14,120,220,0.5);}
+    #compass-arrow{position:absolute;width:2px;height:36px;background:linear-gradient(to top,var(--warn),transparent);bottom:50%;left:50%;transform-origin:bottom center;border-radius:2px;display:none;}
+
+    #fab-area{position:absolute;right:14px;bottom:120px;display:flex;flex-direction:column;gap:10px;z-index:800;}
+    .fab{width:46px;height:46px;border-radius:13px;background:var(--panel);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.1s;backdrop-filter:blur(12px);}
+    .fab:active{transform:scale(0.92);}
+    .fab svg{width:22px;height:22px;}
+    .fab.locating{border-color:var(--blue);}
+    .fab.checking{border-color:var(--blue);animation:pulse 1s infinite;}
+
+    #bottom-panel{position:absolute;bottom:0;left:0;right:0;z-index:900;padding-bottom:max(env(safe-area-inset-bottom),10px);background:linear-gradient(to top,rgba(240,244,248,0.98) 65%,transparent);}
+    #timeline{padding:10px 14px 4px;overflow-x:auto;scrollbar-width:none;}
+    #timeline::-webkit-scrollbar{display:none;}
+    #tl-inner{display:flex;gap:3px;align-items:flex-end;min-width:max-content;}
+    .tslot{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:3px 4px;border-radius:7px;min-width:40px;transition:background 0.15s;}
+    .tslot:active{background:rgba(14,120,220,0.08);}
+    .tbar{width:28px;border-radius:3px 3px 0 0;background:rgba(0,0,0,0.1);}
+    .tslot.past .tbar{background:rgba(14,120,220,0.3);}
+    .tslot.active .tbar{background:var(--blue)!important;}
+    .tslot.forecast .tbar{background:rgba(224,123,0,0.3);}
+    .tslot.forecast.active .tbar{background:var(--warn)!important;}
+    .ttime{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;}
+    .tslot.active .ttime{color:var(--blue);font-weight:700;}
+    .tslot.forecast.active .ttime{color:var(--warn);}
+
+    #controls{display:flex;align-items:center;gap:8px;padding:4px 14px 6px;}
+    #play-btn{width:40px;height:40px;border-radius:50%;background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 0.1s;box-shadow:0 2px 10px rgba(14,120,220,0.3);}
+    #play-btn:active{transform:scale(0.92);}
+    #play-btn svg{width:17px;height:17px;}
+    #speed-btn{height:28px;padding:0 9px;border-radius:7px;background:rgba(0,0,0,0.04);border:1px solid var(--border);color:var(--text2);font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;}
+    #time-display{font-size:13px;font-family:'DM Mono',monospace;color:#0095b3;margin-left:2px;}
+
+    .umark-outer{width:18px;height:18px;border-radius:50%;background:rgba(14,120,220,0.18);display:flex;align-items:center;justify-content:center;animation:ring 2s infinite;}
+    .umark-inner{width:10px;height:10px;border-radius:50%;background:var(--blue);border:2px solid white;}
+    @keyframes ring{0%,100%{box-shadow:0 0 0 0 rgba(14,120,220,0.35)}50%{box-shadow:0 0 0 7px rgba(14,120,220,0)}}
+    .spin{animation:spin 1s linear infinite;}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="topbar">
+  <div class="title-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#0e78dc" stroke-width="2">
+      <path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 16.25"/>
+      <line x1="8" y1="16" x2="8" y2="21"/><line x1="8" y1="21" x2="6" y2="21"/>
+      <line x1="12" y1="16" x2="12" y2="21"/><line x1="16" y1="16" x2="16" y2="21"/>
+    </svg>
+  </div>
+  <h1>เรดาร์ฝน</h1>
+  <span id="clock">--:--</span>
+</div>
+
+<div id="status-chip"><div class="chip-dot" id="chip-dot"></div><span id="chip-text">แตะปุ่ม 📍 เพื่อระบุตำแหน่ง</span></div>
+
+<div id="legend">
+  <div class="lg-title">ความเข้มฝน</div>
+  <div class="lg-bar"></div>
+  <div class="lg-labels"><span>เบา</span><span>หนัก</span></div>
+</div>
+
+<div id="toast">
+  <svg class="toast-icon" id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#e07b00" stroke-width="2">
+    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+  <div><div id="toast-title"></div><div id="toast-body"></div></div>
+</div>
+
+<div id="rain-card">
+  <div id="rain-card-header">
+    <span id="rain-card-icon">🔍</span>
+    <span id="rain-card-title">กำลังวิเคราะห์...</span>
+    <button id="rain-card-close" onclick="document.getElementById('rain-card').classList.remove('show')">✕</button>
+  </div>
+  <div id="compass">
+    <div class="compass-ring">
+      <span class="compass-dir n">N</span>
+      <span class="compass-dir s">S</span>
+      <span class="compass-dir e">E</span>
+      <span class="compass-dir w">W</span>
+      <div id="compass-arrow"></div>
+      <div class="compass-dot me" style="left:50%;top:50%;"></div>
+    </div>
+  </div>
+  <div id="rain-card-body">--</div>
+</div>
+
+<div id="fab-area">
+  <button class="fab" id="rain-check-btn" title="ตรวจสอบทิศทางฝน">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#0e78dc" stroke-width="2">
+      <circle cx="11" cy="11" r="7"/>
+      <path d="M21 21l-4.35-4.35"/>
+      <path d="M11 8v6M8 11h6"/>
+    </svg>
+  </button>
+  <button class="fab" id="locate-btn">
+    <svg id="locate-icon" viewBox="0 0 24 24" fill="none" stroke="#0e78dc" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+    </svg>
+  </button>
+</div>
+
+<div id="bottom-panel">
+  <div id="timeline"><div id="tl-inner"></div></div>
+  <div id="controls">
+    <button id="play-btn"><svg id="play-icon" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg></button>
+    <button id="speed-btn">1×</button>
+    <span id="time-display">--:--</span>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Leafletタイルエラーを非表示
+L.TileLayer.include({
+  _tileOnError: function(done, tile, e) {
+    tile.style.display = 'none';
+    done(null, tile);
+  }
+});
+
+let map, radarLayer, locationMarker, accuracyCircle;
+let userLat=null, userLng=null;
+let frames=[], currentFrameIdx=0;
+let playing=false, playTimer=null, playSpeed=1;
+let toastTimer=null;
+
+// タイ時刻 UTC+7
+function nowTH() { return new Date(Date.now() + 7*3600*1000); }
+function fmtTime(ms) {
+  // UTC+7に変換して表示
+  const d = new Date(ms + 7*3600*1000);
+  const h = String(d.getUTCHours()).padStart(2,'0');
+  const m = String(d.getUTCMinutes()).padStart(2,'0');
+  return `${h}:${m}`;
+}
+
+function updateClock(){
+  const d = nowTH();
+  document.getElementById('clock').textContent =
+    String(d.getUTCHours()).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
+}
+updateClock(); setInterval(updateClock, 15000);
+
+// MAP — バンコク中心
+function initMap(lat, lng) {
+  if(map){ map.setView([lat,lng],10); return; }
+  map = L.map('map',{center:[lat,lng],zoom:10,minZoom:4,maxZoom:14,zoomControl:false,attributionControl:true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap contributors',maxZoom:19,maxNativeZoom:19
+  }).addTo(map);
+  fetchTimeline(lat, lng);
+}
+
+// RainViewerタイムライン取得
+async function fetchTimeline(lat, lng) {
+  try {
+    const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+    const data = await res.json();
+    const past = (data.radar.past||[]).slice(-6);
+    const nowcast = (data.radar.nowcast||[]).slice(0,3);
+
+    frames = [];
+    [...past,...nowcast].forEach(f=>{
+      frames.push({time:f.time*1000, path:f.path, isForecast:nowcast.includes(f), precip:0});
+    });
+
+    // 8時間先まで1時間ごと予測フレーム
+    const nowMs = Date.now();
+    for(let h=1;h<=8;h++){
+      frames.push({time:nowMs+h*3600*1000, path:null, isForecast:true, precip:0});
+    }
+
+    // 降水量バー（Open-Meteo / UTC+7）
+    if(lat&&lng){
+      try{
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=precipitation&forecast_days=2&timezone=Asia%2FBangkok`);
+        const d = await r.json();
+        frames.forEach(f=>{
+          const localD = new Date(f.time + 7*3600*1000);
+          const key = `${localD.getUTCFullYear()}-${String(localD.getUTCMonth()+1).padStart(2,'0')}-${String(localD.getUTCDate()).padStart(2,'0')}T${String(localD.getUTCHours()).padStart(2,'0')}:00`;
+          const i = d.hourly.time.indexOf(key);
+          if(i!==-1) f.precip = d.hourly.precipitation[i]||0;
+        });
+      }catch(e){}
+    }
+
+    buildTimeline();
+    setFrame(past.length - 1);
+    document.getElementById('legend').classList.add('show');
+  } catch(e) { setChip('red','โหลดข้อมูลไม่สำเร็จ'); }
+}
+
+function buildTimeline(){
+  const inner = document.getElementById('tl-inner');
+  inner.innerHTML = '';
+  const maxP = Math.max(...frames.map(f=>f.precip), 0.5);
+  frames.forEach((f,i)=>{
+    const slot = document.createElement('div');
+    slot.className = 'tslot' + (f.isForecast?' forecast':' past');
+    const label = fmtTime(f.time);
+    const barH = Math.max(5, Math.round((f.precip/maxP)*30));
+    slot.innerHTML = `<div class="tbar" style="height:${barH}px"></div><div class="ttime">${label}</div>`;
+    slot.addEventListener('click',()=>{setFrame(i);stopPlay();});
+    inner.appendChild(slot);
+  });
+  updateTLActive();
+  scrollToActive();
+}
+
+function updateTLActive(){ document.querySelectorAll('.tslot').forEach((el,i)=>el.classList.toggle('active',i===currentFrameIdx)); }
+function scrollToActive(){ const a=document.querySelector('.tslot.active'); if(a) a.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); }
+
+function setFrame(idx){
+  currentFrameIdx = Math.max(0, Math.min(frames.length-1, idx));
+  updateTLActive();
+  renderRadar();
+  updateTimeDisplay();
+}
+
+function updateTimeDisplay(){
+  const f = frames[currentFrameIdx];
+  const lbl = document.getElementById('time-display');
+  if(!f){ lbl.textContent='--:--'; return; }
+  lbl.textContent = f.isForecast ? fmtTime(f.time)+' พยากรณ์' : fmtTime(f.time);
+  lbl.style.color = f.isForecast ? '#e07b00' : '#0095b3';
+}
+
+function renderRadar(){
+  if(!map) return;
+  if(radarLayer){ map.removeLayer(radarLayer); radarLayer=null; }
+  const f = frames[currentFrameIdx];
+  if(!f||!f.path) return;
+  radarLayer = L.tileLayer(
+    `https://tilecache.rainviewer.com${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
+    { opacity:0.72, tileSize:256, maxNativeZoom:6, maxZoom:14,
+      errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+      crossOrigin:true }
+  ).addTo(map);
+  radarLayer.on('tileerror', e=>{ e.tile.style.display='none'; });
+}
+
+// PLAYBACK
+const SPEEDS=[1,2,4];
+function togglePlay(){ playing?stopPlay():startPlay(); }
+function startPlay(){
+  playing=true; updatePlayBtn();
+  playTimer=setInterval(()=>{
+    setFrame(currentFrameIdx>=frames.length-1?0:currentFrameIdx+1);
+    scrollToActive();
+  }, 600/playSpeed);
+}
+function stopPlay(){ playing=false; clearInterval(playTimer); updatePlayBtn(); }
+function updatePlayBtn(){
+  document.getElementById('play-icon').innerHTML = playing
+    ? '<rect x="5" y="3" width="4" height="18" fill="white"/><rect x="15" y="3" width="4" height="18" fill="white"/>'
+    : '<polygon points="5,3 19,12 5,21" fill="white"/>';
+}
+document.getElementById('play-btn').addEventListener('click', togglePlay);
+document.getElementById('speed-btn').addEventListener('click',()=>{
+  playSpeed = SPEEDS[(SPEEDS.indexOf(playSpeed)+1)%SPEEDS.length];
+  document.getElementById('speed-btn').textContent = playSpeed+'×';
+  if(playing){ stopPlay(); startPlay(); }
+});
+
+// LOCATE
+document.getElementById('locate-btn').addEventListener('click', locate);
+function locate(){
+  if(!navigator.geolocation){ showToast('warn','ไม่รองรับ','เบราว์เซอร์นี้ไม่รองรับ GPS'); return; }
+  setChip('blue','กำลังระบุตำแหน่ง...');
+  document.getElementById('locate-btn').classList.add('locating');
+  document.getElementById('locate-icon').classList.add('spin');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+    document.getElementById('locate-btn').classList.remove('locating');
+    document.getElementById('locate-icon').classList.remove('spin');
+    initMap(userLat, userLng);
+    placeMarker(userLat, userLng, pos.coords.accuracy);
+    setChip('green',`${userLat.toFixed(4)}, ${userLng.toFixed(4)}`);
+    setTimeout(()=>document.getElementById('status-chip').classList.add('hidden'), 4000);
+  }, err=>{
+    document.getElementById('locate-btn').classList.remove('locating');
+    document.getElementById('locate-icon').classList.remove('spin');
+    const msgs={1:'ไม่อนุญาตการเข้าถึงตำแหน่ง',2:'ระบุตำแหน่งไม่ได้',3:'หมดเวลา'};
+    setChip('red', msgs[err.code]||'เกิดข้อผิดพลาด');
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+}
+
+function placeMarker(lat,lng,acc){
+  if(locationMarker){ map.removeLayer(locationMarker); map.removeLayer(accuracyCircle); }
+  locationMarker = L.marker([lat,lng],{icon:L.divIcon({
+    className:'',html:'<div class="umark-outer"><div class="umark-inner"></div></div>',
+    iconSize:[18,18],iconAnchor:[9,9]
+  })}).addTo(map);
+  accuracyCircle = L.circle([lat,lng],{radius:acc,color:'#0e78dc',weight:1,opacity:0.3,fillColor:'#0e78dc',fillOpacity:0.05}).addTo(map);
+}
+
+// 雨雲方向チェック（タイ語）
+const DIRS_TH = [
+  {name:'เหนือ',   angle:0,   dlat: 0.45, dlng: 0},
+  {name:'ตะวันออกเฉียงเหนือ', angle:45,  dlat: 0.32, dlng: 0.45},
+  {name:'ตะวันออก', angle:90,  dlat: 0,    dlng: 0.65},
+  {name:'ตะวันออกเฉียงใต้',  angle:135, dlat:-0.32, dlng: 0.45},
+  {name:'ใต้',     angle:180, dlat:-0.45, dlng: 0},
+  {name:'ตะวันตกเฉียงใต้',   angle:225, dlat:-0.32, dlng:-0.45},
+  {name:'ตะวันตก', angle:270, dlat: 0,    dlng:-0.65},
+  {name:'ตะวันตกเฉียงเหนือ', angle:315, dlat: 0.32, dlng:-0.45},
+];
+
+document.getElementById('rain-check-btn').addEventListener('click', checkRainDirection);
+
+async function checkRainDirection(){
+  if(!userLat){ showToast('warn','ยังไม่ได้ระบุตำแหน่ง','กรุณากดปุ่ม 📍 ก่อน'); return; }
+  const card = document.getElementById('rain-card');
+  const btn = document.getElementById('rain-check-btn');
+  btn.classList.add('checking');
+  card.className = 'show';
+  document.getElementById('rain-card-icon').textContent = '🔍';
+  document.getElementById('rain-card-title').textContent = 'กำลังวิเคราะห์...';
+  document.getElementById('rain-card-body').textContent = 'กำลังดึงข้อมูล 8 ทิศทาง';
+  document.getElementById('compass-arrow').style.display = 'none';
+  document.querySelectorAll('.compass-dot:not(.me)').forEach(d=>d.remove());
+
+  try {
+    const points = [
+      {label:'ตำแหน่งปัจจุบัน', lat:userLat, lng:userLng},
+      ...DIRS_TH.map(d=>({label:d.name, angle:d.angle, lat:userLat+d.dlat, lng:userLng+d.dlng}))
+    ];
+
+    const results = await Promise.all(points.map(async p=>{
+      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat.toFixed(4)}&longitude=${p.lng.toFixed(4)}&hourly=precipitation&forecast_days=1&timezone=Asia%2FBangkok`);
+      const d = await r.json();
+      const now = Date.now();
+      let max1h=0, firstRainH=999;
+      d.hourly.time.forEach((t,i)=>{
+        const diff = (new Date(t).getTime() - now) / 3600000;
+        if(diff>=0&&diff<=1) max1h = Math.max(max1h, d.hourly.precipitation[i]);
+        if(diff>=0&&diff<=2&&d.hourly.precipitation[i]>0.1&&firstRainH===999) firstRainH=diff;
+      });
+      return {...p, max1h, firstRainH};
+    }));
+
+    btn.classList.remove('checking');
+    const here = results[0];
+    const dirs = results.slice(1);
+
+    // コンパスドット描画
+    const ring = document.querySelector('.compass-ring');
+    dirs.forEach(d=>{
+      const dot = document.createElement('div');
+      dot.className = 'compass-dot ' + (d.max1h>0.1?'rain':'clear');
+      const rad = (d.angle-90)*Math.PI/180;
+      dot.style.left = (50 + Math.cos(rad)*38)+'%';
+      dot.style.top  = (50 + Math.sin(rad)*38)+'%';
+      ring.appendChild(dot);
+    });
+
+    const rainDirs = dirs.filter(d=>d.max1h>0.1).sort((a,b)=>a.firstRainH-b.firstRainH);
+    const cardEl = document.getElementById('rain-card');
+    const arrow = document.getElementById('compass-arrow');
+
+    if(here.max1h>1){
+      cardEl.className='show warn';
+      document.getElementById('rain-card-icon').textContent='☔';
+      document.getElementById('rain-card-title').textContent='ตอนนี้กำลังมีฝนตก';
+      document.getElementById('rain-card-body').innerHTML=
+        `ฝนตกที่ตำแหน่งของคุณ: <strong>~${here.max1h.toFixed(1)} mm/h</strong><br>`+
+        (rainDirs.length>0?`ฝนยังอยู่ทาง<strong>${rainDirs.map(d=>d.label).join(', ')}</strong>ด้วย`:'');
+    } else if(rainDirs.length>0){
+      const closest = rainDirs[0];
+      const eta = closest.firstRainH<1 ? `ประมาณ ${Math.round(closest.firstRainH*60)} นาที` : `ประมาณ ${closest.firstRainH.toFixed(1)} ชั่วโมง`;
+      arrow.style.display='block';
+      arrow.style.transform=`translateX(-50%) rotate(${closest.angle}deg)`;
+      cardEl.className='show warn';
+      document.getElementById('rain-card-icon').textContent='🌧️';
+      document.getElementById('rain-card-title').textContent=`ฝนกำลังเคลื่อนมาจากทิศ${closest.name}`;
+      document.getElementById('rain-card-body').innerHTML=
+        `ตรวจพบเมฆฝนทาง<strong>${rainDirs.map(d=>d.label).join(', ')}</strong><br>`+
+        `อาจมีฝนใน<strong>${eta}</strong>`;
+    } else {
+      cardEl.className='show safe';
+      document.getElementById('rain-card-icon').textContent='☀️';
+      document.getElementById('rain-card-title').textContent='ไม่มีเมฆฝนในบริเวณใกล้เคียง';
+      document.getElementById('rain-card-body').innerHTML=
+        `ไม่พบเมฆฝนในรัศมี<strong>~50 กม.</strong>ใน 1 ชั่วโมงข้างหน้า`;
+    }
+  } catch(e){
+    btn.classList.remove('checking');
+    document.getElementById('rain-card-icon').textContent='⚠️';
+    document.getElementById('rain-card-title').textContent='โหลดข้อมูลไม่สำเร็จ';
+    document.getElementById('rain-card-body').textContent='กรุณาลองใหม่อีกครั้ง';
+  }
+}
+
+function setChip(dot,text){
+  document.getElementById('chip-dot').className='chip-dot'+(dot?' '+dot:'');
+  document.getElementById('chip-text').textContent=text;
+  document.getElementById('status-chip').classList.remove('hidden');
+}
+function showToast(type,title,body){
+  const t=document.getElementById('toast');
+  const c={warn:'#e07b00',danger:'#d62b2b',success:'#1a9e3f',info:'#0e78dc'};
+  document.getElementById('toast-icon').setAttribute('stroke',c[type]||'#0e78dc');
+  document.getElementById('toast-title').textContent=title;
+  document.getElementById('toast-body').textContent=body;
+  t.className='show'+(type==='warn'?' warn':type==='danger'?' danger':'');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),5000);
+}
+document.getElementById('toast').addEventListener('click',()=>document.getElementById('toast').classList.remove('show'));
+
+// バンコク中心で初期表示
+initMap(13.7563, 100.5018);
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}</script>
+</body>
+</html>
